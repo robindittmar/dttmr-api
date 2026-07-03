@@ -45,13 +45,7 @@ func main() {
 			log.Print(err)
 		}
 
-		b, err := json.Marshal(resp)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		_, err = w.Write(b)
+		err := json.NewEncoder(w).Encode(resp)
 		if err != nil {
 			log.Println(err)
 			return
@@ -61,19 +55,13 @@ func main() {
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		resp := HealthResponse{Status: "ok"}
 
-		b, err := json.Marshal(&resp)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		_, err = w.Write(b)
+		err := json.NewEncoder(w).Encode(resp)
 		if err != nil {
 			log.Println(err)
 			return
 		}
 	})
 
-	fmt.Println("Listening on localhost:8080")
-	log.Fatal(http.ListenAndServe("localhost:8080", nil))
+	fmt.Println("Listening on port 8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
