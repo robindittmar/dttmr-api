@@ -1,67 +1,47 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
+	"context"
+	"errors"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/robindittmar/dttmr-api/internal/api/router"
 )
 
-type ApiResponse struct {
-	Method     string            `json:"method"`
-	Url        string            `json:"url"`
-	Proto      string            `json:"proto"`
-	Header     map[string]string `json:"header"`
-	Host       string            `json:"host"`
-	RemoteAddr string            `json:"remoteAddr"`
-	Form       map[string]string `json:"form"`
-}
-
-type HealthResponse struct {
-	Status string `json:"status"`
-}
-
 func main() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		var resp ApiResponse
+	cfg := router.Config{}
+	mux := router.NewMux(cfg)
 
-		resp.Method = r.Method
-		resp.Url = r.URL.String()
-		resp.Proto = r.Proto
-		resp.Header = make(map[string]string)
-		resp.Host = r.Host
-		resp.RemoteAddr = r.RemoteAddr
-		resp.Form = make(map[string]string)
+	srv := &http.Server{
+		Addr:         ":8080",
+		Handler:      mux,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
 
-		for k, v := range r.Header {
-			resp.Header[k] = v[0]
+	go func() {
+		log.Printf("Listening on %s\n", srv.Addr)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("Failed to start server: %v", err)
 		}
+	}()
 
-		if err := r.ParseForm(); err == nil {
-			for k, v := range r.Form {
-				resp.Form[k] = v[0]
-			}
-		} else {
-			log.Print(err)
-		}
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down server...")
 
-		err := json.NewEncoder(w).Encode(resp)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-	})
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		resp := HealthResponse{Status: "ok"}
-
-		err := json.NewEncoder(w).Encode(resp)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-	})
-
-	fmt.Println("Listening on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
+	}
+	log.Println("Server shutdown successful!")
 }
