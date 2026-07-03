@@ -17,6 +17,10 @@ type ApiResponse struct {
 	Form       map[string]string `json:"form"`
 }
 
+type HealthResponse struct {
+	Status string `json:"status"`
+}
+
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		var resp ApiResponse
@@ -42,6 +46,22 @@ func main() {
 		}
 
 		b, err := json.Marshal(resp)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		_, err = w.Write(b)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+	})
+
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		resp := HealthResponse{Status: "ok"}
+
+		b, err := json.Marshal(&resp)
 		if err != nil {
 			log.Println(err)
 			return
