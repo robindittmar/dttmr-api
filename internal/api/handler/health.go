@@ -11,6 +11,7 @@ type healthResponse struct {
 }
 
 func HealthHandler(w http.ResponseWriter, r *http.Request) {
+	_ = r
 	resp := healthResponse{
 		Status: "ok",
 	}
