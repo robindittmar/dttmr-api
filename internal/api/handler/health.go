@@ -12,7 +12,7 @@ type healthResponse struct {
 
 func HealthHandler(w http.ResponseWriter, r *http.Request) {
 	resp := healthResponse{
-		Status: "OK",
+		Status: "ok",
 	}
 	response.JSON(w, http.StatusOK, resp)
 }
