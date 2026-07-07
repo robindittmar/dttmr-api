@@ -11,9 +11,10 @@ type healthResponse struct {
 }
 
 func HealthHandler(w http.ResponseWriter, r *http.Request) {
-	_ = r
+	ctx := r.Context()
+
 	resp := healthResponse{
 		Status: "ok",
 	}
-	response.JSON(w, http.StatusOK, resp)
+	response.JSON(ctx, w, http.StatusOK, resp)
 }

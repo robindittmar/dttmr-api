@@ -1,8 +1,7 @@
 FROM golang:1.26 AS build
 
 WORKDIR /app
-#COPY go.mod go.sum ./
-COPY go.mod ./
+COPY go.mod go.sum ./
 
 RUN go mod download
 

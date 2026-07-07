@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/robindittmar/dttmr-api/internal/api/response"
@@ -18,15 +18,17 @@ type apiResponse struct {
 }
 
 func DefaultHandler(w http.ResponseWriter, r *http.Request) {
-	var resp apiResponse
+	ctx := r.Context()
 
-	resp.Method = r.Method
-	resp.Url = r.URL.String()
-	resp.Proto = r.Proto
-	resp.Header = make(map[string]string)
-	resp.Host = r.Host
-	resp.RemoteAddr = r.RemoteAddr
-	resp.Form = make(map[string]string)
+	resp := apiResponse{
+		Method:     r.Method,
+		Url:        r.URL.String(),
+		Proto:      r.Proto,
+		Header:     make(map[string]string),
+		Host:       r.Host,
+		RemoteAddr: r.RemoteAddr,
+		Form:       make(map[string]string),
+	}
 
 	for k, v := range r.Header {
 		resp.Header[k] = v[0]
@@ -37,8 +39,8 @@ func DefaultHandler(w http.ResponseWriter, r *http.Request) {
 			resp.Form[k] = v[0]
 		}
 	} else {
-		log.Println(err)
+		slog.ErrorContext(ctx, "Error parsing form", slog.Any("error", err))
 	}
 
-	response.JSON(w, http.StatusOK, resp)
+	response.JSON(ctx, w, http.StatusOK, resp)
 }
