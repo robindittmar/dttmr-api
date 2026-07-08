@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/robindittmar/dttmr-api/internal/api/router"
 	"github.com/robindittmar/dttmr-api/internal/telemetry"
 )
@@ -25,6 +26,8 @@ func main() {
 }
 
 func run(serviceName string, serviceVersion string) error {
+	_ = godotenv.Load(".env")
+
 	baseHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	})
