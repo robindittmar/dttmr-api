@@ -14,11 +14,18 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 )
 
-func Init(ctx context.Context, serviceName string, version string) (func(context.Context) error, error) {
+type Config struct {
+	ServiceName    string
+	ServiceVersion string
+	Endpoint       string
+	Environment    string
+}
+
+func Init(ctx context.Context, cfg Config) (func(context.Context) error, error) {
 	res, err := resource.New(ctx,
 		resource.WithAttributes(
-			semconv.ServiceName(serviceName),
-			semconv.ServiceVersion(version),
+			semconv.ServiceName(cfg.ServiceName),
+			semconv.ServiceVersion(cfg.ServiceVersion),
 		),
 	)
 	if err != nil {
@@ -34,7 +41,7 @@ func Init(ctx context.Context, serviceName string, version string) (func(context
 
 	traceExporter, err := otlptracegrpc.New(ctx,
 		otlptracegrpc.WithInsecure(), // TODO: for local development
-		otlptracegrpc.WithEndpoint("localhost:4317"),
+		otlptracegrpc.WithEndpoint(cfg.Endpoint),
 	)
 	if err != nil {
 		return nil, err
@@ -47,7 +54,7 @@ func Init(ctx context.Context, serviceName string, version string) (func(context
 
 	metricExporter, err := otlpmetricgrpc.New(ctx,
 		otlpmetricgrpc.WithInsecure(),
-		otlpmetricgrpc.WithEndpoint("localhost:4317"),
+		otlpmetricgrpc.WithEndpoint(cfg.Endpoint),
 	)
 	if err != nil {
 		return nil, err

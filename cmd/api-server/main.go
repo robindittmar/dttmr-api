@@ -15,6 +15,9 @@ import (
 	"github.com/robindittmar/dttmr-api/internal/telemetry"
 )
 
+type Config struct {
+}
+
 func main() {
 	serviceName := "dttmr-api"
 	serviceVersion := "0.1.0"
@@ -32,13 +35,18 @@ func run(serviceName string, serviceVersion string) error {
 		Level: slog.LevelInfo,
 	})
 	traceHandler := &telemetry.TraceHandler{Handler: baseHandler}
-
 	logger := slog.New(traceHandler)
 	slog.SetDefault(logger)
 
 	slog.Info("Starting service", slog.String("service", serviceName), slog.String("version", serviceVersion))
 
-	shutdownTelemetry, err := telemetry.Init(context.Background(), serviceName, serviceVersion)
+	telCfg := telemetry.Config{
+		ServiceName:    serviceName,
+		ServiceVersion: serviceVersion,
+		Endpoint:       "localhost:4317",
+		Environment:    "development",
+	}
+	shutdownTelemetry, err := telemetry.Init(context.Background(), telCfg)
 	if err != nil {
 		slog.Error("Failed to initialize telemetry", err)
 		return err
