@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -68,7 +69,7 @@ func run(serviceName string, serviceVersion string) error {
 		}
 	}()
 
-	srv := makeServer(cfg)
+	srv := makeServer(db, cfg.Port)
 	go func() {
 		slog.Info("Starting http server", "addr", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -105,12 +106,14 @@ func setupLogging() {
 	slog.SetDefault(logger)
 }
 
-func makeServer(cfg *config.Config) *http.Server {
-	routerConfig := router.Config{}
+func makeServer(db *sql.DB, port int) *http.Server {
+	routerConfig := router.Config{
+		Database: db,
+	}
 	mux := router.NewMux(routerConfig)
 
 	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.Port),
+		Addr:         fmt.Sprintf(":%d", port),
 		Handler:      mux,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
