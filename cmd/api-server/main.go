@@ -15,6 +15,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/robindittmar/dttmr-api/internal/api/router"
+	"github.com/robindittmar/dttmr-api/internal/database"
 	"github.com/robindittmar/dttmr-api/internal/telemetry"
 )
 
@@ -22,6 +23,7 @@ type Config struct {
 	Environment  string
 	Port         int
 	OTLPEndpoint string
+	DatabaseURL  string
 }
 
 func main() {
@@ -59,6 +61,18 @@ func run(serviceName string, serviceVersion string) error {
 
 		if err := shutdownTelemetry(shutdownCtx); err != nil {
 			slog.Error("Failed to shutdown telemetry", err)
+		}
+	}()
+
+	db, err := database.New(context.Background(), cfg.DatabaseURL)
+	if err != nil {
+		slog.Error("Failed to initialize database", slog.Any("error", err))
+		return err
+	}
+	defer func() {
+		err := db.Close()
+		if err != nil {
+			slog.Error("Failed to close database connection", slog.Any("error", err))
 		}
 	}()
 
@@ -103,6 +117,7 @@ func loadConfig() *Config {
 	envFlag := flag.String("env", "development", "environment to use")
 	portFlag := flag.Int("port", 8080, "port to listen on")
 	otlpEndpointFlag := flag.String("otlp-endpoint", "localhost:4317", "otlp endpoint")
+	databaseUrlFlag := flag.String("database-url", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable", "database connection string")
 
 	flag.Parse()
 
@@ -110,11 +125,13 @@ func loadConfig() *Config {
 		Environment:  *envFlag,
 		Port:         *portFlag,
 		OTLPEndpoint: *otlpEndpointFlag,
+		DatabaseURL:  *databaseUrlFlag,
 	}
 
 	assignStringFromEnv("DTTMR_ENVIRONMENT", &cfg.Environment)
 	assignIntFromEnv("DTTMR_PORT", &cfg.Port)
 	assignStringFromEnv("DTTMR_OTLP_ENDPOINT", &cfg.OTLPEndpoint)
+	assignStringFromEnv("DTTMR_DATABASE_URL", &cfg.DatabaseURL)
 
 	return cfg
 }
