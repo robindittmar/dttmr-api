@@ -2,34 +2,29 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
-	"flag"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/robindittmar/dttmr-api/internal/api/router"
+	"github.com/robindittmar/dttmr-api/internal/config"
+	"github.com/robindittmar/dttmr-api/internal/database"
 	"github.com/robindittmar/dttmr-api/internal/telemetry"
 )
-
-type Config struct {
-	Environment  string
-	Port         int
-	OTLPEndpoint string
-}
 
 func main() {
 	serviceName := "dttmr-api"
 	serviceVersion := "0.1.0"
 
 	if err := run(serviceName, serviceVersion); err != nil {
-		slog.Error("Service crashed", slog.Any("error", err))
+		slog.Error("Service crashed")
 		os.Exit(1)
 	}
 }
@@ -40,7 +35,7 @@ func run(serviceName string, serviceVersion string) error {
 
 	slog.Info("Starting service", slog.String("service", serviceName), slog.String("version", serviceVersion))
 
-	cfg := loadConfig()
+	cfg := config.Load()
 
 	telCfg := telemetry.Config{
 		ServiceName:    serviceName,
@@ -62,7 +57,19 @@ func run(serviceName string, serviceVersion string) error {
 		}
 	}()
 
-	srv := makeServer(cfg)
+	db, err := database.New(context.Background(), cfg.DatabaseURL)
+	if err != nil {
+		slog.Error("Failed to initialize database", slog.Any("error", err))
+		return err
+	}
+	defer func() {
+		err := db.Close()
+		if err != nil {
+			slog.Error("Failed to close database connection", slog.Any("error", err))
+		}
+	}()
+
+	srv := makeServer(db, cfg.Port)
 	go func() {
 		slog.Info("Starting http server", "addr", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -99,49 +106,14 @@ func setupLogging() {
 	slog.SetDefault(logger)
 }
 
-func loadConfig() *Config {
-	envFlag := flag.String("env", "development", "environment to use")
-	portFlag := flag.Int("port", 8080, "port to listen on")
-	otlpEndpointFlag := flag.String("otlp-endpoint", "localhost:4317", "otlp endpoint")
-
-	flag.Parse()
-
-	cfg := &Config{
-		Environment:  *envFlag,
-		Port:         *portFlag,
-		OTLPEndpoint: *otlpEndpointFlag,
+func makeServer(db *sql.DB, port int) *http.Server {
+	routerConfig := router.Config{
+		Database: db,
 	}
-
-	assignStringFromEnv("DTTMR_ENVIRONMENT", &cfg.Environment)
-	assignIntFromEnv("DTTMR_PORT", &cfg.Port)
-	assignStringFromEnv("DTTMR_OTLP_ENDPOINT", &cfg.OTLPEndpoint)
-
-	return cfg
-}
-
-func assignStringFromEnv(key string, target *string) {
-	if val, exists := os.LookupEnv(key); exists {
-		*target = val
-	}
-}
-
-func assignIntFromEnv(key string, target *int) {
-	if val, exists := os.LookupEnv(key); exists {
-		parsed, err := strconv.Atoi(val)
-		if err != nil {
-			slog.Error("Failed to parse environment variable", slog.String("var", key), slog.Any("error", err))
-		} else {
-			*target = parsed
-		}
-	}
-}
-
-func makeServer(cfg *Config) *http.Server {
-	routerConfig := router.Config{}
 	mux := router.NewMux(routerConfig)
 
 	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.Port),
+		Addr:         fmt.Sprintf(":%d", port),
 		Handler:      mux,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
