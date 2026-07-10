@@ -23,7 +23,7 @@ func main() {
 	serviceVersion := "0.1.0"
 
 	if err := run(serviceName, serviceVersion); err != nil {
-		slog.Error("Service crashed", slog.Any("error", err))
+		slog.Error("Service crashed")
 		os.Exit(1)
 	}
 }
