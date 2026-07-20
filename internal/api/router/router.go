@@ -15,15 +15,20 @@ type Config struct {
 }
 
 func NewMux(cfg Config) http.Handler {
+	userRepo := repository.NewUserRepo(cfg.Database)
+	userService := domain.NewUserService(userRepo)
+	userHandler := handler.NewUserHandler(userService)
+
 	listRepo := repository.NewListRepo(cfg.Database)
 	listService := domain.NewListService(listRepo)
-
-	listHandler := handler.ListHandler{ListService: listService}
+	listHandler := handler.NewListHandler(listService)
 
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", handler.DefaultHandler)
 	mux.HandleFunc("GET /health", handler.HealthHandler)
+
+	mux.HandleFunc("POST /users", userHandler.CreateUser)
 
 	mux.HandleFunc("POST /lists", listHandler.CreateList)
 

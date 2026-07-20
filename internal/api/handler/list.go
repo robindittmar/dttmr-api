@@ -13,6 +13,10 @@ type ListHandler struct {
 	ListService *domain.ListService
 }
 
+func NewListHandler(listService *domain.ListService) *ListHandler {
+	return &ListHandler{ListService: listService}
+}
+
 func (h *ListHandler) CreateList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
