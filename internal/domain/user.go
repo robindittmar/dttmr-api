@@ -31,11 +31,9 @@ func (s *UserService) CreateUser(ctx context.Context, email string, name string,
 	if len(email) == 0 {
 		return nil, errors.New("email is required")
 	}
-
 	if len(name) == 0 {
 		return nil, errors.New("name is required")
 	}
-
 	if len(password) == 0 {
 		return nil, errors.New("password is required")
 	}
