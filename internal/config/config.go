@@ -18,7 +18,7 @@ func Load() *Config {
 	envFlag := flag.String("env", "development", "environment to use")
 	portFlag := flag.Int("port", 8080, "port to listen on")
 	otlpEndpointFlag := flag.String("otlp-endpoint", "localhost:4317", "otlp endpoint")
-	databaseUrlFlag := flag.String("database-url", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable", "database connection string")
+	databaseUrlFlag := flag.String("database-url", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&timezone=utc", "database connection string")
 
 	flag.Parse()
 
