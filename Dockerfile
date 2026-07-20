@@ -5,7 +5,8 @@ COPY go.mod go.sum ./
 
 RUN go mod download
 
-COPY . .
+COPY "./internal" "./internal"
+COPY "./cmd" "./cmd"
 
 RUN go build -o ./server github.com/robindittmar/dttmr-api/cmd/api-server
 
@@ -13,6 +14,7 @@ FROM debian:latest
 
 WORKDIR /app
 
+COPY .env.docker .env
 COPY --from=build /app/server /app/server
 
 EXPOSE 8080
