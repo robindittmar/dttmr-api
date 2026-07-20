@@ -69,6 +69,10 @@ func run(serviceName string, serviceVersion string) error {
 		}
 	}()
 
+	if err := database.RunMigrations(db); err != nil {
+		slog.Error("Failed to run migrations", slog.Any("error", err))
+	}
+
 	srv := makeServer(db, cfg.Port)
 	go func() {
 		slog.Info("Starting http server", "addr", srv.Addr)
