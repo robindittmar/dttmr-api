@@ -22,12 +22,7 @@ func (r *ListRepo) CreateList(ctx context.Context, name string, userIDs []string
 	if err != nil {
 		return nil, fmt.Errorf("begin transaction: %w", err)
 	}
-	defer func() {
-		err := tx.Rollback()
-		if err != nil {
-			slog.Error("failed to rollback transaction", slog.Any("error", err))
-		}
-	}()
+	defer tx.Rollback()
 
 	list := &domain.List{Name: name}
 
