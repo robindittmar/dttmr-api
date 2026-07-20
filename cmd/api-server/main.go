@@ -53,7 +53,7 @@ func run(serviceName string, serviceVersion string) error {
 		defer cancel()
 
 		if err := shutdownTelemetry(shutdownCtx); err != nil {
-			slog.Error("Failed to shutdown telemetry", err)
+			slog.Error("Failed to shutdown telemetry", slog.Any("error", err))
 		}
 	}()
 
