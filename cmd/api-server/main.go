@@ -24,7 +24,7 @@ func main() {
 	serviceVersion := "0.1.0"
 
 	if err := run(serviceName, serviceVersion); err != nil {
-		slog.Error("Service crashed")
+		slog.Error("service crashed")
 		os.Exit(1)
 	}
 }
@@ -33,7 +33,7 @@ func run(serviceName string, serviceVersion string) error {
 	_ = godotenv.Load(".env")
 	setupLogging()
 
-	slog.Info("Starting service", slog.String("service", serviceName), slog.String("version", serviceVersion))
+	slog.Info("starting service", slog.String("service", serviceName), slog.String("version", serviceVersion))
 
 	cfg := config.Load()
 
@@ -45,7 +45,7 @@ func run(serviceName string, serviceVersion string) error {
 	}
 	shutdownTelemetry, err := telemetry.Init(context.Background(), telCfg)
 	if err != nil {
-		slog.Error("Failed to initialize telemetry", err)
+		slog.Error("failed to initialize telemetry", err)
 		return err
 	}
 	defer func() {
@@ -53,27 +53,31 @@ func run(serviceName string, serviceVersion string) error {
 		defer cancel()
 
 		if err := shutdownTelemetry(shutdownCtx); err != nil {
-			slog.Error("Failed to shutdown telemetry", slog.Any("error", err))
+			slog.Error("failed to shutdown telemetry", slog.Any("error", err))
 		}
 	}()
 
 	db, err := database.New(context.Background(), cfg.DatabaseURL)
 	if err != nil {
-		slog.Error("Failed to initialize database", slog.Any("error", err))
+		slog.Error("failed to initialize database", slog.Any("error", err))
 		return err
 	}
 	defer func() {
 		err := db.Close()
 		if err != nil {
-			slog.Error("Failed to close database connection", slog.Any("error", err))
+			slog.Error("failed to close database connection", slog.Any("error", err))
 		}
 	}()
 
+	if err := database.RunMigrations(db); err != nil {
+		slog.Error("failed to run migrations", slog.Any("error", err))
+	}
+
 	srv := makeServer(db, cfg.Port)
 	go func() {
-		slog.Info("Starting http server", "addr", srv.Addr)
+		slog.Info("starting http server", "addr", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("Failed to start http server", err)
+			slog.Error("failed to start http server", err)
 			os.Exit(1)
 		}
 	}()
@@ -81,17 +85,17 @@ func run(serviceName string, serviceVersion string) error {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-quit
-	slog.Info("Shutting down server...", slog.String("signal", sig.String()))
+	slog.Info("shutting down server...", slog.String("signal", sig.String()))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		slog.Error("Server forced to shutdown", slog.Any("error", err))
+		slog.Error("server forced to shutdown", slog.Any("error", err))
 		return err
 	}
 
-	slog.Info("Service shutdown successful!")
+	slog.Info("service shutdown successful!")
 	return nil
 }
 

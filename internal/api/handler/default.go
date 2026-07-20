@@ -39,7 +39,7 @@ func DefaultHandler(w http.ResponseWriter, r *http.Request) {
 			resp.Form[k] = v[0]
 		}
 	} else {
-		slog.ErrorContext(ctx, "Error parsing form", slog.Any("error", err))
+		slog.ErrorContext(ctx, "error parsing form", slog.Any("error", err))
 	}
 
 	response.JSON(ctx, w, http.StatusOK, resp)

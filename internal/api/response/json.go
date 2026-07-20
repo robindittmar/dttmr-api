@@ -14,7 +14,7 @@ func JSON(ctx context.Context, w http.ResponseWriter, status int, data any) {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, err := w.Write([]byte(`{"error": "internal server error: failed to marshal response"}`))
 		if err != nil {
-			slog.ErrorContext(ctx, "Failed to write JSON", slog.Any("error", err))
+			slog.ErrorContext(ctx, "failed to write json", slog.Any("error", err))
 			return
 		}
 		return
@@ -24,7 +24,7 @@ func JSON(ctx context.Context, w http.ResponseWriter, status int, data any) {
 	w.WriteHeader(status)
 	_, err = w.Write(payload)
 	if err != nil {
-		slog.ErrorContext(ctx, "Failed to write response", slog.Any("error", err))
+		slog.ErrorContext(ctx, "failed to write response", slog.Any("error", err))
 		return
 	}
 }

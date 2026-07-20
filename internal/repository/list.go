@@ -22,19 +22,14 @@ func (r *ListRepo) CreateList(ctx context.Context, name string, userIDs []string
 	if err != nil {
 		return nil, fmt.Errorf("begin transaction: %w", err)
 	}
-	defer func() {
-		err := tx.Rollback()
-		if err != nil {
-			slog.Error("Failed to rollback transaction", slog.Any("error", err))
-		}
-	}()
+	defer tx.Rollback()
 
 	list := &domain.List{Name: name}
 
 	err = tx.QueryRowContext(ctx,
-		"INSERT INTO lists (name) VALUES ($1) RETURNING id, created_at",
+		"INSERT INTO lists (name) VALUES ($1) RETURNING id, created_at, modified_at",
 		name,
-	).Scan(&list.ID, &list.CreatedAt)
+	).Scan(&list.ID, &list.CreatedAt, &list.ModifiedAt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert list: %w", err)
 	}
@@ -46,7 +41,7 @@ func (r *ListRepo) CreateList(ctx context.Context, name string, userIDs []string
 	defer func() {
 		err := stmt.Close()
 		if err != nil {
-
+			slog.Error("failed to close user/list association statement", slog.Any("error", err))
 		}
 	}()
 

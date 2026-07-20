@@ -53,7 +53,7 @@ func Init(ctx context.Context, cfg Config) (func(context.Context) error, error) 
 	)
 
 	metricExporter, err := otlpmetricgrpc.New(ctx,
-		otlpmetricgrpc.WithInsecure(),
+		otlpmetricgrpc.WithInsecure(), // TODO: for local development
 		otlpmetricgrpc.WithEndpoint(cfg.Endpoint),
 	)
 	if err != nil {
