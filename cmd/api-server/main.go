@@ -36,6 +36,7 @@ func run(serviceName string, serviceVersion string) error {
 	setupLogging()
 
 	slog.Info("starting service", slog.String("service", serviceName), slog.String("version", serviceVersion))
+	defer slog.Info("service shutdown!")
 
 	cfg := config.Load()
 
@@ -97,7 +98,6 @@ func run(serviceName string, serviceVersion string) error {
 		return err
 	}
 
-	slog.Info("service shutdown successful!")
 	return nil
 }
 
