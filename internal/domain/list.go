@@ -21,8 +21,8 @@ type ListService struct {
 	repo ListRepository
 }
 
-func NewListService(repo ListRepository) *ListService {
-	return &ListService{repo: repo}
+func NewListService(r ListRepository) *ListService {
+	return &ListService{repo: r}
 }
 
 func (s *ListService) Create(ctx context.Context, name string, userIDs []string) (*List, error) {
