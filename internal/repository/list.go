@@ -25,7 +25,7 @@ func (r *ListRepo) CreateList(ctx context.Context, name string, userIDs []string
 	defer func() {
 		err := tx.Rollback()
 		if err != nil {
-			slog.Error("Failed to rollback transaction", slog.Any("error", err))
+			slog.Error("failed to rollback transaction", slog.Any("error", err))
 		}
 	}()
 
@@ -46,7 +46,7 @@ func (r *ListRepo) CreateList(ctx context.Context, name string, userIDs []string
 	defer func() {
 		err := stmt.Close()
 		if err != nil {
-
+			slog.Error("failed to close user/list association statement", slog.Any("error", err))
 		}
 	}()
 
