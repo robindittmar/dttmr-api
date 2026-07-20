@@ -14,8 +14,6 @@ type CreateListPayload struct {
 func DecodeCreateList(r *http.Request) (CreateListPayload, error) {
 	var payload CreateListPayload
 
-	r.Body = http.MaxBytesReader(nil, r.Body, 1024*64)
-
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 
