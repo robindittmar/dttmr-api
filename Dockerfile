@@ -13,6 +13,7 @@ FROM debian:latest
 
 WORKDIR /app
 
+COPY .env.docker .env
 COPY --from=build /app/server /app/server
 
 EXPOSE 8080
