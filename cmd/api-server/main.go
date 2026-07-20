@@ -30,6 +30,8 @@ func main() {
 }
 
 func run(serviceName string, serviceVersion string) error {
+	time.Local, _ = time.LoadLocation("UTC")
+
 	_ = godotenv.Load(".env")
 	setupLogging()
 
