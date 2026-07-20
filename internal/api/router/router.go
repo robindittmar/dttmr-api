@@ -28,6 +28,7 @@ func NewMux(cfg Config) http.Handler {
 	mux.HandleFunc("POST /lists", listHandler.CreateList)
 
 	var httpHandler http.Handler = mux
+	httpHandler = middleware.WithMaxBytes(1024 * 64)(httpHandler)
 	httpHandler = middleware.WithTelemetry(httpHandler)
 
 	return httpHandler
