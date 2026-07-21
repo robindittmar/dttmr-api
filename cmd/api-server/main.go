@@ -76,7 +76,7 @@ func run(serviceName string, serviceVersion string) error {
 		slog.Error("failed to run migrations", slog.Any("error", err))
 	}
 
-	srv := makeServer(db, cfg.Port)
+	srv := makeServer(db, cfg)
 	go func() {
 		slog.Info("starting http server", "addr", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -112,14 +112,15 @@ func setupLogging() {
 	slog.SetDefault(logger)
 }
 
-func makeServer(db *sql.DB, port int) *http.Server {
+func makeServer(db *sql.DB, cfg *config.Config) *http.Server {
 	routerConfig := router.Config{
-		Database: db,
+		Database:  db,
+		JWTSecret: cfg.JWTSecret,
 	}
 	mux := router.NewMux(routerConfig)
 
 	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", port),
+		Addr:         fmt.Sprintf(":%d", cfg.Port),
 		Handler:      mux,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,

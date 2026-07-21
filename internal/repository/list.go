@@ -55,5 +55,5 @@ func (r *ListRepo) CreateList(ctx context.Context, name string, userIDs []string
 		return nil, fmt.Errorf("commit transaction: %w", err)
 	}
 
-	return list, err
+	return list, nil
 }
