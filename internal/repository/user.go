@@ -37,5 +37,5 @@ func (r *UserRepo) CreateUser(ctx context.Context, email string, name string, pa
 		return nil, fmt.Errorf("commit transaction: %w", err)
 	}
 
-	return user, err
+	return user, nil
 }

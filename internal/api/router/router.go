@@ -11,7 +11,8 @@ import (
 )
 
 type Config struct {
-	Database *sql.DB
+	Database  *sql.DB
+	JWTSecret string
 }
 
 func NewMux(cfg Config) http.Handler {
@@ -19,18 +20,24 @@ func NewMux(cfg Config) http.Handler {
 	userService := domain.NewUserService(userRepo)
 	userHandler := handler.NewUserHandler(userService)
 
+	authRepo := repository.NewAuthRepo(cfg.Database)
+	authService := domain.NewAuthService(authRepo, []byte(cfg.JWTSecret))
+	authHandler := handler.NewAuthHandler(authService)
+
 	listRepo := repository.NewListRepo(cfg.Database)
 	listService := domain.NewListService(listRepo)
 	listHandler := handler.NewListHandler(listService)
 
-	mux := http.NewServeMux()
+	protected := middleware.WithJWT(authService)
 
+	mux := http.NewServeMux()
 	mux.HandleFunc("/", handler.DefaultHandler)
 	mux.HandleFunc("GET /health", handler.HealthHandler)
+	mux.HandleFunc("POST /login", authHandler.Login)
 
-	mux.HandleFunc("POST /users", userHandler.CreateUser)
+	mux.Handle("POST /users", protected(userHandler.CreateUser))
 
-	mux.HandleFunc("POST /lists", listHandler.CreateList)
+	mux.Handle("POST /lists", protected(listHandler.CreateList))
 
 	var httpHandler http.Handler = mux
 	httpHandler = middleware.WithMaxBytes(1024 * 64)(httpHandler)
